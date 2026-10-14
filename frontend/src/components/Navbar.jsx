@@ -36,7 +36,7 @@ export default function Navbar({
             <span className="ping-core"></span>
           </span>
           <span className="status-text">
-            {isConnected ? "Backend Connected (Port 5000)" : "Backend Disconnected"}
+            {isConnected ? "Backend Connected" : "Backend Disconnected"}
           </span>
         </div>
 

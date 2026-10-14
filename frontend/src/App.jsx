@@ -23,12 +23,16 @@ function App() {
   const [activeNav, setActiveNav] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch student records from the existing backend API
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? "http://localhost:5000" : "");
+
+  // Fetch student records from backend API
   const fetchStudents = async () => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:5000/api/students");
+      const response = await fetch(`${API_BASE_URL}/api/students`);
 
       if (!response.ok) {
         throw new Error("Unable to fetch student records");
@@ -53,7 +57,7 @@ function App() {
 
     async function loadData() {
       try {
-        const response = await fetch("http://localhost:5000/api/students");
+        const response = await fetch(`${API_BASE_URL}/api/students`);
         if (!response.ok) {
           throw new Error("Unable to fetch student records");
         }

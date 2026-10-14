@@ -40,7 +40,7 @@ export default function StudentTable({
           <IconAlertCircle size={32} />
         </div>
         <h4 className="state-title">Failed to Load Student Records</h4>
-        <p className="state-desc">{error}. Make sure your Node.js backend is running on port 5000.</p>
+        <p className="state-desc">{error}. Please verify backend server and database connectivity.</p>
         {onRetry && (
           <button type="button" className="btn-retry" onClick={onRetry}>
             <IconRefresh size={16} />

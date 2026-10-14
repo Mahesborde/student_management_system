@@ -27,8 +27,31 @@ app.get("/", (req, res) => {
 // Get all students from Supabase
 app.get("/api/students", async (req, res) => {
   try {
-    
-/* Add a new student */
+    const { data, error } = await supabase
+      .from("students")
+      .select("*")
+      .order("student_id", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      count: data.length,
+      students: data
+    });
+  } catch (error) {
+    console.error("Fetch students error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch student records."
+    });
+  }
+});
+
+// Add a new student
 app.post("/api/students", async (req, res) => {
   try {
     const {
@@ -94,33 +117,13 @@ app.post("/api/students", async (req, res) => {
   }
 });
 
-    const { data, error } = await supabase
-      .from("students")
-      .select("*")
-      .order("student_id", { ascending: true });
-
-    if (error) {
-      throw error;
-    }
-
-    res.json({
-      success: true,
-      count: data.length,
-      students: data
-    });
-  } catch (error) {
-    console.error("Fetch students error:", error.message);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch student records."
-    });
-  }
-});
-
 // Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Backend running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
