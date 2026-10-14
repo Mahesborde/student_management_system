@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -10,23 +9,58 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
-);
+// Identify and read Supabase environment variables
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_KEY ||
+  process.env.SUPABASE_ANON_KEY;
+
+// Safe startup validation: report missing variables without exposing secret values
+const missingEnvVars = [];
+if (!supabaseUrl) {
+  missingEnvVars.push("SUPABASE_URL");
+}
+if (!supabaseKey) {
+  missingEnvVars.push("SUPABASE_SECRET_KEY");
+}
+
+if (missingEnvVars.length > 0) {
+  console.error("==================================================================");
+  console.error("❌ CRITICAL CONFIGURATION ERROR: Missing Supabase Environment Variables!");
+  console.error(`   The following required variable(s) are missing: ${missingEnvVars.join(", ")}`);
+  console.error("   If deploying on Render, configure them in Render Dashboard -> Environment.");
+  console.error("   Expected: SUPABASE_URL and SUPABASE_SECRET_KEY");
+  console.error("==================================================================");
+} else {
+  console.log("✅ Supabase environment variables detected successfully.");
+}
+
+// Connect to Supabase safely without throwing unhandled exceptions at startup
+const supabase = (supabaseUrl && supabaseKey)
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 // Test route
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Student Management System Backend is running!"
+    message: "Student Management System Backend is running!",
+    supabaseConfigured: Boolean(supabase)
   });
 });
 
 // Get all students from Supabase
 app.get("/api/students", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({
+        success: false,
+        message: "Supabase client is not initialized. Please ensure SUPABASE_URL and SUPABASE_SECRET_KEY are set in Render environment variables."
+      });
+    }
+
     const { data, error } = await supabase
       .from("students")
       .select("*")
@@ -46,7 +80,7 @@ app.get("/api/students", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch student records."
+      message: "Failed to fetch student records: " + error.message
     });
   }
 });
@@ -54,6 +88,13 @@ app.get("/api/students", async (req, res) => {
 // Add a new student
 app.post("/api/students", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({
+        success: false,
+        message: "Supabase client is not initialized. Please ensure SUPABASE_URL and SUPABASE_SECRET_KEY are set in Render environment variables."
+      });
+    }
+
     const {
       roll_number,
       first_name,
@@ -117,7 +158,7 @@ app.post("/api/students", async (req, res) => {
   }
 });
 
-// Start server
+// Start server using process.env.PORT or default to 5000
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== "test") {
